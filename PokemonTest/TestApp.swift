@@ -6,14 +6,14 @@
 //
 
 import SwiftUI
+import CoreData
 
 @main
 struct TestApp: App {
-	@Environment(\.managedObjectContext) var context
-
     var body: some Scene {
         WindowGroup {
-            ContentView(context: context)
+            ContentView()
         }
     }
 }
+

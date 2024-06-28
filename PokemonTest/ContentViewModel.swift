@@ -41,8 +41,7 @@ class ContentViewModel: ObservableObject {
 	
 	var apiClient: APIClientProtocol
 	
-	init(context: NSManagedObjectContext,
-		 apiClient: APIClientProtocol,
+	init(apiClient: APIClientProtocol,
 		 pokemonArray: [Pokemon] = [],
 		 filteredObjects: [Pokemon] = [],
 		 filterActive: Bool = false,
@@ -51,9 +50,10 @@ class ContentViewModel: ObservableObject {
 		self.pokemonArray = pokemonArray
 		self.filteredObjects = filteredObjects
 		self.filterActive = filterActive
-		self.context = context
-		fetchData()
+		self.context = PersistenceController.shared.container.viewContext
+
 		readData()
+		fetchData()
 	}
 		
 	func fetchData() {
@@ -75,19 +75,36 @@ class ContentViewModel: ObservableObject {
 	}
 	
 	func storeData(_ pokemons: [Pokemon]) {
+		let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "PokemonData")
+		let result = try? context.fetch(fetchRequest) as? [PokemonData]
+		
 		for pokemon in pokemons {
-			let pokemonData = PokemonData(context: context)
-			pokemonData.name = pokemon.name
-			pokemonData.types = pokemon.pokemonDetails?.typesString
+			if searchName(pokemon.name ?? "").count == 0 {
+				let pokemonData = PokemonData(context: context)
+				pokemonData.name = pokemon.name
+				pokemonData.types = pokemon.pokemonDetails?.typesString
+			}
 		}
-		try? context.save()
+		try? context.hasChanges ? context.save() : ()
+	}
+	
+	func searchName(_ name: String) -> [PokemonData] {
+		let fetchRequest: NSFetchRequest<PokemonData> = PokemonData.fetchRequest()
+		fetchRequest.entity = PokemonData.entity()
+		fetchRequest.predicate = NSPredicate(
+			 format: "name CONTAINS %@", name
+		)
+		return (try? context.fetch(fetchRequest)) ?? []
 	}
 	
 	func readData() {
+		let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "PokemonData")
+		let result = try? context.fetch(fetchRequest) as? [PokemonData]
 		
-//		let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Model")
-//		let result = try? context.fetch(fetchRequest)
-//		print(result)
+		for pokemon in result ?? [] {
+			pokemonArray.removeAll()
+			pokemonArray.append(Pokemon(name: pokemon.name))
+		}
 	}
 	
 	func filterBy(_ filterType: FilterType, criteria: String) {

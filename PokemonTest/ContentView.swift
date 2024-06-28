@@ -9,17 +9,15 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-//	@Environment(\.managedObjectContext) var context
-	@StateObject var viewModel: ContentViewModel
+	@StateObject var viewModel = ContentViewModel(apiClient: APIClient())
 	@State var showFilterPopover: Bool
 	
 	let columns = [
 		GridItem(.adaptive(minimum: 180))
 	]
 	
-	init(context: NSManagedObjectContext, showFilterPopover: Bool = false) {
+	init(showFilterPopover: Bool = false) {
 		self.showFilterPopover = showFilterPopover
-		self._viewModel = StateObject(wrappedValue: ContentViewModel(context: context, apiClient: APIClient()))
 	}
 	
 	var body: some View {
